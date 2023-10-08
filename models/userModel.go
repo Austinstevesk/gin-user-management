@@ -15,6 +15,7 @@ type User struct {
 	Role string `gorm:"type:varchar(255); not null"`
 	Provider string `gorm:"not null"`
 	Photo string `gorm:"not null"`
+	VerificationCode string
 	Verified bool `gorm:"not null"`
 }
 

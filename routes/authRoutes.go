@@ -22,4 +22,5 @@ func (rc *AuthRouteController) AuthRouter(rg *gin.RouterGroup) {
 	router.POST("/login", rc.authController.SignInUser)
 	router.POST("/refresh", rc.authController.RefreshAccessToken)
 	router.GET("/logout", rc.authController.LogoutUser)
+	router.GET("/verifyemail/:verificationCode", rc.authController.VerifyEmail)
 }

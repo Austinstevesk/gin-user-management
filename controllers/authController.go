@@ -3,6 +3,7 @@ package controllers
 import (
 	"fmt"
 	"gin-user-management/helpers"
+	"gin-user-management/initializers"
 	"gin-user-management/models"
 	"net/http"
 	"os"
@@ -10,6 +11,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/thanhpk/randstr"
 	"gorm.io/gorm"
 )
 
@@ -55,7 +57,7 @@ func (ac *AuthController) SignUp(ctx *gin.Context)  {
 		Email: payload.Email,
 		Password: hashedPassword,
 		Role: "user",
-		Verified: true,
+		Verified: false,
 		Photo: payload.Photo,
 		Provider: "local",
 	}
@@ -76,22 +78,80 @@ func (ac *AuthController) SignUp(ctx *gin.Context)  {
 			return
 		}
 
-		userResponse := &models.UserResponse{
-			ID: int(newUser.ID),
-			Name: newUser.Name,
-			Email: newUser.Email,
-			Photo: newUser.Photo,
-			Role: newUser.Role,
-			Provider: newUser.Provider,
-			CreatedAt: newUser.CreatedAt,
-			UpdatedAt: newUser.UpdatedAt,
+		initializers.LoadEnvVariables()
+		// generate code
+		code := randstr.String(20)
+		verificationCode := helpers.Encode(code)
+
+		// update user in db
+		newUser.VerificationCode = verificationCode
+		ac.DB.Save(newUser)
+
+		firstName := newUser.Name
+		if strings.Contains(firstName, " ") {
+			firstName = strings.Split(firstName, " ")[1]
 		}
+
+		// send email
+		emailData := helpers.EmailData{
+			URL: os.Getenv("CLIENT_ORIGIN") + "/verifyemail/" + code,
+			FirstName: firstName,
+			Subject: "Your account verification code",
+		}
+
+		helpers.SendEmail(&newUser, &emailData)
+		message := "We sent an email with verification code to  " + newUser.Email
+
+		// userResponse := &models.UserResponse{
+		// 	ID: int(newUser.ID),
+		// 	Name: newUser.Name,
+		// 	Email: newUser.Email,
+		// 	Photo: newUser.Photo,
+		// 	Role: newUser.Role,
+		// 	Provider: newUser.Provider,
+		// 	CreatedAt: newUser.CreatedAt,
+		// 	UpdatedAt: newUser.UpdatedAt,
+		// }
 		ctx.JSON(http.StatusCreated, gin.H{
 			"status": "success",
-			"data": gin.H{
-				"user": userResponse,
-			},
+			"message": message,
+			// "data": gin.H{
+			// 	"user": userResponse,
+			// },
 		})
+}
+
+func (ac *AuthController) VerifyEmail (ctx *gin.Context) {
+	code := ctx.Params.ByName("verificationCode")
+	verificationCode := helpers.Encode(code)
+
+
+	var updatedUser models.User
+	result := ac.DB.First(&updatedUser, "verification_code = ?", verificationCode)
+	if result.Error != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"status": "failed",
+			"message": "Invalid verification code",
+		})
+		return
+	}
+
+	if updatedUser.Verified {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"status": "failed",
+			"message": "User already verified",
+		})
+		return
+	}
+
+	updatedUser.VerificationCode = ""
+	updatedUser.Verified = true
+	ac.DB.Save(&updatedUser)
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"status": "success",
+		"message": "Email verified successfully",
+	})
 }
 
 func (ac *AuthController) SignInUser(ctx *gin.Context) {
@@ -119,6 +179,14 @@ func (ac *AuthController) SignInUser(ctx *gin.Context) {
 		ctx.JSON(http.StatusUnauthorized, gin.H{
 			"status": "failed",
 			"message": "Invalid email or password",
+		})
+		return
+	}
+	
+	if !user.Verified {
+		ctx.JSON(http.StatusForbidden, gin.H{
+			"status": "failed",
+			"message": "Please verify your account",
 		})
 		return
 	}
