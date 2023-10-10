@@ -99,25 +99,12 @@ func (ac *AuthController) SignUp(ctx *gin.Context)  {
 			Subject: "Your account verification code",
 		}
 
-		helpers.SendEmail(&newUser, &emailData)
+		helpers.SendEmail(&newUser, &emailData, "verificationCode.html")
 		message := "We sent an email with verification code to  " + newUser.Email
 
-		// userResponse := &models.UserResponse{
-		// 	ID: int(newUser.ID),
-		// 	Name: newUser.Name,
-		// 	Email: newUser.Email,
-		// 	Photo: newUser.Photo,
-		// 	Role: newUser.Role,
-		// 	Provider: newUser.Provider,
-		// 	CreatedAt: newUser.CreatedAt,
-		// 	UpdatedAt: newUser.UpdatedAt,
-		// }
 		ctx.JSON(http.StatusCreated, gin.H{
 			"status": "success",
 			"message": message,
-			// "data": gin.H{
-			// 	"user": userResponse,
-			// },
 		})
 }
 

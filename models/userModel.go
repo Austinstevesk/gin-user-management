@@ -16,6 +16,8 @@ type User struct {
 	Provider string `gorm:"not null"`
 	Photo string `gorm:"not null"`
 	VerificationCode string
+	PasswordResetToken string
+	PasswordResetAt time.Time
 	Verified bool `gorm:"not null"`
 }
 
@@ -41,4 +43,14 @@ type UserResponse struct {
 	Provider string `json:"provider"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+}
+
+
+type ForgotPasswordInput struct {
+	Email string `json:"email" binding:"required"`
+}
+
+type ResetPasswordInput struct {
+	Password string `json:"password" binding:"required"`
+	PasswordConfirm string `json:"passwordConfirm" binding:"required"`
 }

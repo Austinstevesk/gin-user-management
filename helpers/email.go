@@ -45,7 +45,7 @@ func ParseTemplateDir(dir string) (*template.Template, error) {
 }
 
 
-func SendEmail(user *models.User, data *EmailData) {
+func SendEmail(user *models.User, data *EmailData, emailTemplate string) {
 	from := os.Getenv("EMAIL_FROM")
 	smtpPass := os.Getenv("SMTP_PASS")
 	smtpUser := os.Getenv("SMTP_USER")
@@ -60,7 +60,7 @@ func SendEmail(user *models.User, data *EmailData) {
 		log.Fatal("Could not parse template", err)
 	}
 
-	template.ExecuteTemplate(&body, "verificationCode.html", &data)
+	template.ExecuteTemplate(&body, emailTemplate, &data)
 
 	m := gomail.NewMessage()
 
