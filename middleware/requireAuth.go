@@ -57,3 +57,18 @@ func RequireAuth() gin.HandlerFunc {
 
 	}
 }
+
+func RequireAdmin() gin.HandlerFunc {
+	return func (ctx *gin.Context)  {
+		user := ctx.MustGet("currentUser").(models.User)
+		if user.Role != "Admin"{
+			ctx.AbortWithStatusJSON(http.StatusFailedDependency, gin.H{
+				"status": "Failed",
+				"message": "Not enough permissions",
+			})
+			return
+		}
+		ctx.Next()
+		
+	}
+}

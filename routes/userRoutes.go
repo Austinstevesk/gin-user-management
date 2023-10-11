@@ -17,5 +17,7 @@ func NewUserRouteController(userController controllers.UserController) UserRoute
 
 func (uc *UserRouteController) UserRouter(rg *gin.RouterGroup) {
 	router := rg.Group("users")
-	router.GET("/profile", middleware.RequireAuth(), uc.userController.Userprofile)
+	router.Use(middleware.RequireAuth())
+	router.GET("/profile", uc.userController.Userprofile)
+	router.GET("/admin", middleware.RequireAdmin(), uc.userController.Userprofile)
 }
