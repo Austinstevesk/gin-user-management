@@ -56,7 +56,7 @@ func (ac *AuthController) SignUp(ctx *gin.Context)  {
 		Name: payload.Name,
 		Email: payload.Email,
 		Password: hashedPassword,
-		Role: "user",
+		Role: payload.Role,
 		Verified: false,
 		Photo: payload.Photo,
 		Provider: "local",

@@ -26,6 +26,7 @@ type SignUpInput struct {
 	Email string `json:"email" binding:"required"`
 	Password string `json:"password" binding:"required"`
 	PasswordConfirm string `json:"passwordConfirm" binding:"required"`
+	Role string `json:"role" binding:"required" validate:"required,eq=admin|eq=user"`
 	Photo string `json:"photo" binding:"required"`
 }
 
